@@ -44,7 +44,7 @@ jobs:
 
       - name: Find an unreleased version
         id: version
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs['has-changesets'] == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
