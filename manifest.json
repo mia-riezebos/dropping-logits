@@ -3,6 +3,12 @@
 	"name": "Dropping Logs",
 	"version": "0.1.0",
 	"description": "Replaces AI marketing speak with toilet humour. Launching models? Dropping logs.",
+	"permissions": ["storage"],
+	"action": { "default_title": "Toggle Dropping Logs" },
+	"background": {
+		"service_worker": "background.js",
+		"scripts": ["background.js"]
+	},
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
