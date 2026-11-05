@@ -5,9 +5,11 @@
 	"description": "Web extension that replaces AI marketing speak with toilet humour.",
 	"type": "module",
 	"scripts": {
-		"build": "node scripts/icons.ts && esbuild src/content.ts src/background.ts --bundle --format=iife --target=chrome125,firefox132 --outdir=dist && cp manifest.json dist/",
+		"build": "node scripts/assets.ts && esbuild src/content.ts src/background.ts --bundle --format=iife --target=chrome125,firefox140 --outdir=dist",
 		"check": "tsc && biome check .",
-		"test": "vitest run"
+		"test": "vitest run",
+		"lint:ext": "web-ext lint --source-dir dist",
+		"package": "web-ext build --source-dir dist --artifacts-dir artifacts --filename dropping-logs-{version}.zip --overwrite-dest"
 	},
 	"devEngines": {
 		"packageManager": {
@@ -19,11 +21,13 @@
 	"packageManager": "pnpm@12.16.1",
 	"devDependencies": {
 		"@biomejs/biome": "^2.6.5",
+		"@changesets/cli": "^3.0.3",
 		"@types/chrome": "^0.3.7",
 		"@types/node": "^26.6.6",
 		"esbuild": "^0.28.2",
 		"happy-dom": "^21.0.4",
 		"typescript": "^7.0.2",
-		"vitest": "^5.1.0"
+		"vitest": "^5.1.0",
+		"web-ext": "^10.8.0"
 	}
 }
