@@ -1,0 +1,27 @@
+{
+	"name": "dropping-logs",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Web extension that replaces AI marketing speak with toilet humour.",
+	"type": "module",
+	"scripts": {
+		"build": "esbuild src/content.ts --bundle --format=iife --target=chrome125,firefox132 --outfile=dist/content.js && cp manifest.json dist/",
+		"check": "tsc && biome check .",
+		"test": "vitest run"
+	},
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "12.16.1",
+			"onFail": "download"
+		}
+	},
+	"packageManager": "pnpm@12.16.1",
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.5",
+		"esbuild": "^0.28.2",
+		"happy-dom": "^21.0.4",
+		"typescript": "^7.0.2",
+		"vitest": "^5.1.0"
+	}
+}
