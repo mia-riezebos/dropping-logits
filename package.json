@@ -5,7 +5,7 @@
 	"description": "Web extension that replaces AI marketing speak with toilet humour.",
 	"type": "module",
 	"scripts": {
-		"build": "esbuild src/content.ts src/background.ts --bundle --format=iife --target=chrome125,firefox132 --outdir=dist && cp manifest.json dist/",
+		"build": "node scripts/icons.ts && esbuild src/content.ts src/background.ts --bundle --format=iife --target=chrome125,firefox132 --outdir=dist && cp manifest.json dist/",
 		"check": "tsc && biome check .",
 		"test": "vitest run"
 	},
@@ -20,6 +20,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.6.5",
 		"@types/chrome": "^0.3.7",
+		"@types/node": "^26.6.6",
 		"esbuild": "^0.28.2",
 		"happy-dom": "^21.0.4",
 		"typescript": "^7.0.2",
