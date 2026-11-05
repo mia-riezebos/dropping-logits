@@ -1,6 +1,10 @@
-# Keeps a "chore: version packages" pull request open while changesets wait on main. Once main has no pending
-# changesets and its version has no release yet, this tags vX.Y.Z and publishes a GitHub release with the extension
-# zip, the source zip addons.mozilla.org asks for, and their SHA-256 checksums.
+# Runs on every push to main. If main's version has no release yet, it tags vX.Y.Z and publishes a GitHub release
+# with the extension zip, the source zip addons.mozilla.org asks for, and their SHA-256 checksums. Then it keeps a
+# "chore: version packages" pull request open while changesets wait on main.
+#
+# Releasing comes first because the changesets action switches the checkout to its version branch and bumps the
+# version there. Checking every push (rather than only pushes without changesets) means a version still gets its
+# release when GitHub cancels the pending run of the merge that set it.
 name: Release
 
 on:
@@ -33,16 +37,8 @@ jobs:
           node-version: 24
       - run: pnpm install --frozen-lockfile
 
-      - id: changesets
-        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
-        with:
-          version-script: pnpm changeset version
-          commit-message: "chore: version packages"
-          pr-title: "chore: version packages"
-
       - name: Find an unreleased version
         id: version
-        if: steps.changesets.outputs['has-changesets'] == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -80,3 +76,9 @@ jobs:
             set -- --generate-notes
           fi
           gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" "$@" artifacts/*.zip artifacts/SHA256SUMS
+
+      - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          version-script: pnpm changeset version
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
