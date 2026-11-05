@@ -39,8 +39,6 @@ jobs:
           version-script: pnpm changeset version
           commit-message: "chore: version packages"
           pr-title: "chore: version packages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Find an unreleased version
         id: version
