@@ -33,14 +33,39 @@ const pattern = new RegExp(
 
 const startsUpper = (word: string) => /^\p{Lu}/u.test(word);
 
+/** Words Title Case leaves lowercase unless they come first: "The Future of AI". */
+const SMALL_WORDS = new Set([
+	"a",
+	"an",
+	"and",
+	"at",
+	"by",
+	"for",
+	"in",
+	"of",
+	"on",
+	"or",
+	"the",
+	"to",
+	"with",
+]);
+
+const isTitleCase = (words: string[]) =>
+	words.length > 1 &&
+	words.every(
+		(word, i) => startsUpper(word) || (i > 0 && SMALL_WORDS.has(word)),
+	);
+
 /** Copies the casing of `source` (ALL CAPS, Title Case, Capitalised) onto `target`. */
 function matchCase(source: string, target: string): string {
 	if (source === source.toUpperCase()) return target.toUpperCase();
-	const words = source.split(SEPARATOR);
-	if (words.length > 1 && words.every(startsUpper)) {
+	if (isTitleCase(source.split(SEPARATOR))) {
 		return target.replace(
-			/(^|[\s-])(\p{Ll})/gu,
-			(_, sep: string, letter: string) => sep + letter.toUpperCase(),
+			/(^|[\s-])(\p{Ll}\p{L}*)/gu,
+			(match, sep: string, word: string, offset: number) =>
+				offset > 0 && SMALL_WORDS.has(word)
+					? match
+					: sep + word.charAt(0).toUpperCase() + word.slice(1),
 		);
 	}
 	if (startsUpper(source))

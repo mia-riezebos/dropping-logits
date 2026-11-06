@@ -10,6 +10,11 @@ describe("replaceText", () => {
 			"We are dropping logs today",
 		],
 		["Title Case carries over", "Launching Models", "Dropping Logs"],
+		[
+			"Title Case keeps its small words lowercase",
+			"The Future of Machine Learning",
+			"The Bowels of Machine Leaking",
+		],
 		["ALL CAPS carries over", "LAUNCHING MODELS", "DROPPING LOGS"],
 		["a hyphen matches a spaced key", "cutting-edge AI", "cheese-cutting IBS"],
 		[
