@@ -6,7 +6,7 @@
  * Every "after" is the real extension rewriting the page, and every "before"
  * is the same page after the extension's own toggle switches it off.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -91,6 +91,67 @@ const guarded = await capturePair("protected");
 // Frames render with the extension off, or it would rewrite the captions.
 await browser.setEnabled(false);
 const SCREEN = { width: 1280, height: 800 };
+
+/** X captures come from store/x.mjs, which needs a signed-in browser; their frames skip without them. */
+const xCapture = (handle) =>
+	existsSync(join(OUT, `x-${handle}-after.png`)) && {
+		before: `/out/x-${handle}-before.png`,
+		after: `/out/x-${handle}-after.png`,
+	};
+
+const openai = xCapture("OpenAI");
+if (openai) {
+	await renderFrame(
+		"s1-openbowel",
+		screenshot({
+			headline: "Now dropping logs",
+			subline: "AI marketing speak becomes toilet humour.",
+			panes: [
+				{
+					image: openai.before,
+					url: "x.com/OpenAI",
+					tag: "before",
+					label: "Before",
+				},
+				{
+					image: openai.after,
+					url: "x.com/OpenAI",
+					tag: "after",
+					label: "After",
+				},
+			],
+		}),
+		SCREEN,
+	);
+}
+
+const anthropic = xCapture("AnthropicAI");
+if (anthropic) {
+	await renderFrame(
+		"s2-toggle",
+		screenshot({
+			headline: "One click. Original text.",
+			subline: "Switch off for every tab. No reload.",
+			panes: [
+				{
+					image: anthropic.after,
+					url: "x.com/AnthropicAI",
+					tag: "after",
+					label: "On",
+					icon: "on",
+				},
+				{
+					image: anthropic.before,
+					url: "x.com/AnthropicAI",
+					tag: "before",
+					label: "Off",
+					icon: "off",
+				},
+			],
+		}),
+		SCREEN,
+	);
+}
 
 await renderFrame(
 	"s3-casing",
