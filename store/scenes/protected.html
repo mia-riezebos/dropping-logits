@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Docs · Wobbleplop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+	* { box-sizing: border-box; margin: 0; }
+	body { font-family: Inter, system-ui, sans-serif; color: #0f1222; background: #fff; padding: 24px; -webkit-font-smoothing: antialiased; }
+	h1 { font-size: 24px; letter-spacing: -0.02em; font-weight: 700; }
+	p { margin-top: 10px; font-size: 15px; line-height: 1.55; color: #262a40; }
+	.label { margin-top: 18px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #8a8fa8; }
+	pre {
+		margin-top: 6px;
+		padding: 14px 16px;
+		border-radius: 10px;
+		background: #0f1222;
+		color: #e6e8f5;
+		font: 13.5px/1.6 "JetBrains Mono", ui-monospace, monospace;
+	}
+	pre .c { color: #7f86a8; }
+	textarea, .editor {
+		display: block;
+		width: 100%;
+		margin-top: 6px;
+		padding: 12px 14px;
+		border: 1px solid #d9dbe8;
+		border-radius: 10px;
+		font: 15px/1.5 Inter, system-ui, sans-serif;
+		color: #0f1222;
+		background: #fafaff;
+		resize: none;
+	}
+</style>
+</head>
+<body>
+	<h1>Launching models with the SDK</h1>
+	<p>Launching models takes one call. Our benchmarks show low latency for agentic workflows.</p>
+	<div class="label">Code block</div>
+	<pre><span class="c">// launching models</span>
+const model = await sdk.launch("state-of-the-art")</pre>
+	<div class="label">Text field you're typing in</div>
+	<textarea rows="2">We're launching models with fewer hallucinations</textarea>
+	<div class="label">Editor</div>
+	<div class="editor" contenteditable="true">Draft: launching state-of-the-art models next week</div>
+</body>
+</html>
