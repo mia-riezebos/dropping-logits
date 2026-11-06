@@ -3,8 +3,8 @@
 # "chore: version packages" pull request open while changesets wait on main.
 #
 # Releasing comes first because the changesets action switches the checkout to its version branch and bumps the
-# version there. Checking every push (rather than only pushes without changesets) means a version still gets its
-# release when GitHub cancels the pending run of the merge that set it.
+# version there. Runs queue rather than replace each other, so the merge that set a version releases its own commit;
+# checking every push still catches a version whose run failed.
 name: Release
 
 on:
@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: release
-  cancel-in-progress: false
+  queue: max
 
 jobs:
   release:
@@ -44,11 +44,13 @@ jobs:
         run: |
           version="$(node -p 'require("./package.json").version')"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if gh release view "v$version" > /dev/null 2>&1; then
-            echo "new=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "new=true" >> "$GITHUB_OUTPUT"
-          fi
+          # gh release create drafts the release while it uploads, so a draft is a publish that was cut short.
+          draft="$(gh release view "v$version" --json isDraft --jq .isDraft 2> /dev/null || echo none)"
+          case "$draft" in
+            false) echo "new=false" ;;
+            true) gh release delete "v$version" --yes && echo "new=true" ;;
+            *) echo "new=true" ;;
+          esac >> "$GITHUB_OUTPUT"
 
       - name: Package the extension and its source
         if: steps.version.outputs.new == 'true'
