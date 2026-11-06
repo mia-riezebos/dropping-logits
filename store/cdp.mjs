@@ -8,7 +8,9 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const CHROMIUM = "/Applications/Chromium.app/Contents/MacOS/Chromium";
+/** Branded Chrome ignores --load-extension, so this needs Chromium; set CHROMIUM to its path off macOS. */
+const CHROMIUM =
+	process.env.CHROMIUM ?? "/Applications/Chromium.app/Contents/MacOS/Chromium";
 const PORT = 9883;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

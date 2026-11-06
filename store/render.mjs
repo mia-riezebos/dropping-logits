@@ -3,6 +3,8 @@
  *
  *   pnpm build && node store/render.mjs
  *
+ * Off macOS, point CHROMIUM at a Chromium binary: CHROMIUM=/usr/bin/chromium node store/render.mjs
+ *
  * Every "after" is the real extension rewriting the page, and every "before"
  * is the same page after the extension's own toggle switches it off.
  */

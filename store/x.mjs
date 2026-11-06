@@ -10,12 +10,13 @@
  * signed-in account's follow state, mutual followers and X's nav hidden.
  */
 import { createHash } from "node:crypto";
-import { realpathSync, writeFileSync } from "node:fs";
+import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const STORE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(STORE, "out");
+mkdirSync(OUT, { recursive: true });
 /** The build the browser must have loaded with --load-extension. */
 const DIST = join(STORE, "..", "dist");
 const PANE = {
