@@ -1,8 +1,10 @@
 /**
- * Draws the toolbar icon into dist/icons/icon-<size>.png.
- * The art is 16×16, one character per pixel, scaled by whole pixels so it stays crisp.
+ * Writes the non-code parts of dist/: manifest.json, stamped with the
+ * package.json version so Changesets bumps both, and the toolbar icon as
+ * icons/icon-<size>.png. The icon art is 16×16, one character per pixel,
+ * scaled by whole pixels so it stays crisp.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { crc32, deflateSync } from "node:zlib";
 
 const ART = [
@@ -74,6 +76,13 @@ function png(size: number) {
 	]);
 }
 
+const readJson = (path: string) => JSON.parse(readFileSync(path, "utf8"));
+const { version } = readJson("package.json");
+
 mkdirSync("dist/icons", { recursive: true });
+writeFileSync(
+	"dist/manifest.json",
+	`${JSON.stringify({ ...readJson("manifest.json"), version }, null, "\t")}\n`,
+);
 for (const size of SIZES)
 	writeFileSync(`dist/icons/icon-${size}.png`, png(size));
