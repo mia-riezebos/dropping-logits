@@ -5,6 +5,9 @@
 # Releasing comes first because the changesets action switches the checkout to its version branch and bumps the
 # version there. Runs queue rather than replace each other, so the merge that set a version releases its own commit;
 # checking every push still catches a version whose run failed.
+#
+# A new release then goes to the Chrome Web Store for review, using the extension-stores environment's
+# CHROME_SERVICE_ACCOUNT_KEY secret and its CHROME_PUBLISHER_ID and CHROME_ITEM_ID variables. Without them it skips.
 name: Release
 
 on:
@@ -25,6 +28,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      released: ${{ steps.version.outputs.new }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -84,3 +90,33 @@ jobs:
           version-script: pnpm changeset version
           commit-message: "chore: version packages"
           pr-title: "chore: version packages"
+
+  chrome-web-store:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: extension-stores
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Upload the release zip and submit it for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+          CHROME_SERVICE_ACCOUNT_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_KEY }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+          CHROME_ITEM_ID: ${{ vars.CHROME_ITEM_ID }}
+        run: |
+          if [ -z "$CHROME_SERVICE_ACCOUNT_KEY" ] || [ -z "$CHROME_PUBLISHER_ID" ] || [ -z "$CHROME_ITEM_ID" ]; then
+            echo "::notice::Chrome Web Store credentials are not set up; skipping the store upload."
+            exit 0
+          fi
+          gh release download "v$VERSION" --pattern "dropping-logits-$VERSION.zip" --dir artifacts
+          node scripts/chrome-web-store.ts submit "artifacts/dropping-logits-$VERSION.zip"
