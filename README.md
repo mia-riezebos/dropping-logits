@@ -1,4 +1,4 @@
-# Dropping Logs
+# Dropping Logits
 
 A browser extension that replaces AI marketing speak with toilet humour.
 

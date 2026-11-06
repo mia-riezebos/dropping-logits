@@ -62,7 +62,7 @@ jobs:
           pnpm build
           pnpm lint:ext
           pnpm package
-          git archive --format=zip --output="artifacts/dropping-logs-$VERSION-source.zip" HEAD
+          git archive --format=zip --output="artifacts/dropping-logits-$VERSION-source.zip" HEAD
           cd artifacts && sha256sum ./*.zip > SHA256SUMS
 
       - name: Publish the release

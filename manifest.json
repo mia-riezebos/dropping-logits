@@ -1,12 +1,12 @@
 {
 	"manifest_version": 3,
-	"name": "Dropping Logs",
+	"name": "Dropping Logits",
 	"description": "Replaces AI marketing speak with toilet humour. Launching models? Dropping logs.",
 	"permissions": ["storage"],
 	"minimum_chrome_version": "125",
 	"browser_specific_settings": {
 		"gecko": {
-			"id": "dropping-logs@mia-riezebos",
+			"id": "dropping-logits@mia-riezebos",
 			"strict_min_version": "140.0",
 			"data_collection_permissions": { "required": ["none"] }
 		},
@@ -19,7 +19,7 @@
 		"128": "icons/icon-128.png"
 	},
 	"action": {
-		"default_title": "Toggle Dropping Logs",
+		"default_title": "Toggle Dropping Logits",
 		"default_icon": {
 			"16": "icons/icon-16.png",
 			"32": "icons/icon-32.png"
