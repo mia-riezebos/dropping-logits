@@ -25,7 +25,8 @@ export const dictionary: Record<string, string> = {
 	// Acronyms and brands
 	AI: "IBS",
 	GenAI: "GenIBS",
-	xAI: "xIBS",
+	xAI: "Xcrement",
+	SpaceXAI: "SpaceXcrement",
 	AGI: "Number Two",
 	SOTA: "SOTF",
 	RAG: "TP",
@@ -42,6 +43,9 @@ export const dictionary: Record<string, string> = {
 	DeepMind: "DeepBehind",
 	"Hugging Face": "Hugging Bowl",
 	Grok: "Grunt",
+	Devin: "Shittin",
+	Cognition: "Commodition",
+	"swe bench": "sewage bench",
 
 	// The tech
 	intelligence: "incontinence",
