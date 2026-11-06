@@ -3,6 +3,7 @@
 	"version": "0.1.2",
 	"private": true,
 	"description": "Web extension that replaces AI marketing speak with toilet humour.",
+	"license": "SEE LICENSE IN LICENSE",
 	"type": "module",
 	"scripts": {
 		"build": "node scripts/assets.ts && esbuild src/content.ts src/background.ts --bundle --format=iife --target=chrome125,firefox140 --outdir=dist",

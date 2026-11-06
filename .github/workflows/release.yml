@@ -7,7 +7,8 @@
 # checking every push still catches a version whose run failed.
 #
 # A new release then goes to the Chrome Web Store for review, using the extension-stores environment's
-# CHROME_SERVICE_ACCOUNT_KEY secret and its CHROME_PUBLISHER_ID and CHROME_ITEM_ID variables. Without them it skips.
+# CHROME_SERVICE_ACCOUNT_KEY secret and its CHROME_PUBLISHER_ID and CHROME_ITEM_ID variables, and to addons.mozilla.org
+# using the AMO_JWT_ISSUER and AMO_JWT_SECRET secrets. Each store job skips without its credentials.
 name: Release
 
 on:
@@ -120,3 +121,46 @@ jobs:
           fi
           gh release download "v$VERSION" --pattern "dropping-logits-$VERSION.zip" --dir artifacts
           node scripts/chrome-web-store.ts submit "artifacts/dropping-logits-$VERSION.zip"
+
+  firefox-addons:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          cache: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      # The listing, its licence and categories already exist on AMO; a new version inherits them.
+      - name: Sign the release zip and submit it for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
+            echo "::notice::addons.mozilla.org credentials are not set up; skipping the submission."
+            exit 0
+          fi
+          gh release download "v$VERSION" --pattern "dropping-logits-$VERSION*.zip" --dir artifacts
+          unzip -q "artifacts/dropping-logits-$VERSION.zip" -d artifacts/extension
+          notes="$(awk -v heading="## $VERSION" '$0 == heading { found = 1; next } /^## / { found = 0 } found' CHANGELOG.md | grep -v '^###' | sed -E 's/^- [0-9a-f]{7,}: /- /')"
+          # shellcheck disable=SC2016 # ${version} below is JavaScript, not shell
+          node -e '
+            const [version, notes] = process.argv.slice(1);
+            const approval_notes = `TypeScript bundled with esbuild (not minified); the attached source zip is the tagged repo at v${version}. To reproduce dist/: Node 24 and pnpm (package.json packageManager), then pnpm install --frozen-lockfile && pnpm build. The only permission is storage (one on/off setting). It makes no network requests and collects no data.`;
+            const release_notes = notes.trim() ? { "en-US": notes.trim() } : undefined;
+            require("node:fs").writeFileSync("artifacts/amo.json", JSON.stringify({ version: { approval_notes, release_notes } }));
+          ' "$VERSION" "$notes"
+          pnpm exec web-ext sign --channel listed --source-dir artifacts/extension --artifacts-dir artifacts/signed \
+            --upload-source-code "artifacts/dropping-logits-$VERSION-source.zip" --amo-metadata artifacts/amo.json --approval-timeout 0
