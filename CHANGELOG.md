@@ -1,5 +1,12 @@
 # dropping-logits
 
+## 0.1.3
+
+### Patch Changes
+
+- 32dc999: Labs pacing the frontier are now pinching the floater, and anyone pushing the frontier is pushing the floater.
+- d2567ad: Title Case headings keep their small words lowercase, so "The Future of Machine Learning" becomes "The Bowels of Machine Leaking" instead of "The bowels of Machine Leaking".
+
 ## 0.1.2
 
 ### Patch Changes
