@@ -283,6 +283,8 @@ export const dictionary: Record<string, string> = {
 	moats: "cesspools",
 	flywheel: "flush handle",
 	"north star": "north stall",
+	"pacing the frontier": "pinching the floater",
+	"the frontier": "the floater",
 	"frontier lab": "frontier latrine",
 	"frontier labs": "frontier latrines",
 	"thought leader": "thought leaker",
