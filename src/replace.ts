@@ -56,10 +56,21 @@ const isTitleCase = (words: string[]) =>
 		(word, i) => startsUpper(word) || (i > 0 && SMALL_WORDS.has(word)),
 	);
 
-/** Copies the casing of `source` (ALL CAPS, Title Case, Capitalised) onto `target`. */
-function matchCase(source: string, target: string): string {
+/**
+ * Copies the casing of `source` (ALL CAPS, Title Case, Capitalised) onto `target`.
+ * In a Title Case line, a capitalised `source` gets a Title Case `target` even when
+ * it is one word: "Join the Waitlist" becomes "Join the Toilet Queue".
+ */
+function matchCase(
+	source: string,
+	target: string,
+	inTitleCaseLine: boolean,
+): string {
 	if (source === source.toUpperCase()) return target.toUpperCase();
-	if (isTitleCase(source.split(SEPARATOR))) {
+	if (
+		isTitleCase(source.split(SEPARATOR)) ||
+		(inTitleCaseLine && startsUpper(source))
+	) {
 		return target.replace(
 			/(^|[\s-])(\p{Ll}\p{L}*)/gu,
 			(match, sep: string, word: string, offset: number) =>
@@ -83,10 +94,15 @@ function matchSeparators(source: string, target: string): string {
 
 /** Replaces every dictionary term in `text`. Running it on its own output changes nothing. */
 export function replaceText(text: string): string {
+	const inTitleCaseLine = isTitleCase(text.trim().split(/\s+/));
 	return text.replace(pattern, (match) => {
 		const entry = entries.get(canonical(match).toLowerCase());
 		if (!entry) return match;
 		if (entry.exact) return entry.replacement;
-		return matchCase(match, matchSeparators(match, entry.replacement));
+		return matchCase(
+			match,
+			matchSeparators(match, entry.replacement),
+			inTitleCaseLine,
+		);
 	});
 }

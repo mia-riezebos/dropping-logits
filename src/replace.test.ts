@@ -15,6 +15,16 @@ describe("replaceText", () => {
 			"The Future of Machine Learning",
 			"The Bowels of Machine Leaking",
 		],
+		[
+			"one word in a Title Case line gets a Title Case replacement",
+			"Join the Waitlist",
+			"Join the Toilet Queue",
+		],
+		[
+			"one word in a sentence keeps sentence case",
+			"Insights are great",
+			"Stool samples are great",
+		],
 		["ALL CAPS carries over", "LAUNCHING MODELS", "DROPPING LOGS"],
 		["a hyphen matches a spaced key", "cutting-edge AI", "cheese-cutting IBS"],
 		[
