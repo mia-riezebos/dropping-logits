@@ -51,11 +51,24 @@ it("rewrites page text, new text, and the title, but not code, and toggles back"
 	);
 });
 
-it("keeps Title Case across inline markup inside a heading", async () => {
-	document.body.innerHTML = "<h1>Join the <strong>Waitlist</strong></h1>";
+it.each([
+	[
+		"<h1>Join the <strong>Waitlist</strong></h1>",
+		"<h1>Join the <strong>Toilet Queue</strong></h1>",
+	],
+	// A link inside the heading must not hide the rest of it.
+	[
+		"<h1>Join the <a>Waitlist</a></h1>",
+		"<h1>Join the <a>Toilet Queue</a></h1>",
+	],
+	// "GPU" is rewritten first; the heading still counts as Title Case.
+	[
+		"<h1>GPU <strong>Waitlist</strong></h1>",
+		"<h1>porta-potty <strong>Toilet Queue</strong></h1>",
+	],
+])("keeps Title Case across inline markup: %s", async (html, expected) => {
+	document.body.innerHTML = html;
 	await settle();
 
-	expect(document.body.innerHTML).toBe(
-		"<h1>Join the <strong>Toilet Queue</strong></h1>",
-	);
+	expect(document.body.innerHTML).toBe(expected);
 });

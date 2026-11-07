@@ -6,11 +6,12 @@ const UNTOUCHED = "script, style, noscript, textarea, code, pre, kbd, samp";
 
 /**
  * Short, often Title Case elements whose full text tells a split-up piece how to
- * case its replacement: "<h1>Join the <strong>Waitlist</strong></h1>". Paragraphs
- * stay out, so long text is never re-read for every inline node in it.
+ * case its replacement: "<h1>Join the <strong>Waitlist</strong></h1>". A heading
+ * wins over a link or button inside it. Paragraphs stay out, so long text is never
+ * re-read for every inline node in it.
  */
-const TITLE_CONTEXT =
-	"h1, h2, h3, h4, h5, h6, a, button, th, dt, label, legend, summary";
+const HEADINGS = "h1, h2, h3, h4, h5, h6, th, dt, legend, summary";
+const LABELS = "a, button, label";
 
 /** What each rewritten node said before, so turning off can put it back. */
 const originals = new WeakMap<Text, { original: string; replaced: string }>();
@@ -22,13 +23,23 @@ function forEachText(root: Node, visit: (node: Text) => void) {
 		visit(node as Text);
 }
 
+/** The text of the heading or label around `node` as the page wrote it, before any rewrite. */
+function originalLine(parent: Element, node: Text): string {
+	const line = parent.closest(HEADINGS) ?? parent.closest(LABELS);
+	if (!line) return node.data;
+	let text = "";
+	forEachText(line, (piece) => {
+		const entry = originals.get(piece);
+		text +=
+			entry && piece.data === entry.replaced ? entry.original : piece.data;
+	});
+	return text;
+}
+
 function rewrite(node: Text) {
 	const parent = node.parentElement;
 	if (!parent || parent.isContentEditable || parent.closest(UNTOUCHED)) return;
-	const replaced = replaceText(
-		node.data,
-		parent.closest(TITLE_CONTEXT)?.textContent ?? node.data,
-	);
+	const replaced = replaceText(node.data, originalLine(parent, node));
 	if (replaced === node.data) return;
 	originals.set(node, { original: node.data, replaced });
 	node.data = replaced;
