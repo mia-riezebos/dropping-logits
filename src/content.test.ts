@@ -50,3 +50,12 @@ it("rewrites page text, new text, and the title, but not code, and toggles back"
 		"<p>Our most pungent log yet</p><code>model.launch()</code><p>Fewer sharts</p>",
 	);
 });
+
+it("keeps Title Case across inline markup inside a heading", async () => {
+	document.body.innerHTML = "<h1>Join the <strong>Waitlist</strong></h1>";
+	await settle();
+
+	expect(document.body.innerHTML).toBe(
+		"<h1>Join the <strong>Toilet Queue</strong></h1>",
+	);
+});

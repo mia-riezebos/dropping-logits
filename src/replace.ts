@@ -92,9 +92,13 @@ function matchSeparators(source: string, target: string): string {
 	return words.map((word, i) => word + (separators[i] ?? "")).join("");
 }
 
-/** Replaces every dictionary term in `text`. Running it on its own output changes nothing. */
-export function replaceText(text: string): string {
-	const inTitleCaseLine = isTitleCase(text.trim().split(/\s+/));
+/**
+ * Replaces every dictionary term in `text`. Running it on its own output changes nothing.
+ * `line` is the whole heading or label `text` sits in, when markup splits it into
+ * pieces; its casing decides whether replacements get Title Case.
+ */
+export function replaceText(text: string, line = text): string {
+	const inTitleCaseLine = isTitleCase(line.trim().split(/\s+/));
 	return text.replace(pattern, (match) => {
 		const entry = entries.get(canonical(match).toLowerCase());
 		if (!entry) return match;
