@@ -29,4 +29,8 @@ Add a line to [`src/dictionary.ts`](src/dictionary.ts). Its doc comment covers c
 
 ## Release
 
-Add a changeset to any PR that changes what users get: `pnpm changeset`. Merging to `main` keeps a "chore: version packages" PR open; merging that tags `vX.Y.Z` and publishes a GitHub release with the extension zip, its source zip, and `SHA256SUMS`.
+Add a changeset to any PR that changes what users get: `pnpm changeset`. Merging to `main` keeps a "chore: version packages" PR open; merging that tags `vX.Y.Z` and publishes a GitHub release with the extension zip, its source zip, and `SHA256SUMS`. The release then goes to the Chrome Web Store and addons.mozilla.org for review.
+
+## License
+
+[MCX License (mia.cx) v1.0](LICENSE), derived from the Mozilla Public License 2.0.
