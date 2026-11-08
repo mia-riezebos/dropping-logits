@@ -20,7 +20,7 @@ const setEnabled = (enabled: boolean) => {
 };
 const settle = () => new Promise((resolve) => setTimeout(resolve));
 
-it("rewrites page text, new text, and the title, but not code, and toggles back", async () => {
+it("rewrites page text, new text, the title and input hints, but not code, and toggles back", async () => {
 	document.title = "Launching models";
 	document.body.innerHTML =
 		"<p>Our most powerful model yet</p><code>model.launch()</code>";
@@ -29,26 +29,26 @@ it("rewrites page text, new text, and the title, but not code, and toggles back"
 	await settle();
 	const late = document.createElement("p");
 	late.textContent = "Fewer hallucinations";
-	document.body.append(late);
+	const input = document.createElement("textarea");
+	input.placeholder = "Ask ChatGPT";
+	document.body.append(late, input);
 	await settle();
 
+	const rewritten =
+		'<p>Our most pungent log yet</p><code>model.launch()</code><p>Fewer sharts</p><textarea placeholder="Ask FartGPoo"></textarea>';
 	expect(document.title).toBe("Dropping logs");
-	expect(document.body.innerHTML).toBe(
-		"<p>Our most pungent log yet</p><code>model.launch()</code><p>Fewer sharts</p>",
-	);
+	expect(document.body.innerHTML).toBe(rewritten);
 
 	setEnabled(false);
 	await settle();
 	expect(document.title).toBe("Launching models");
 	expect(document.body.innerHTML).toBe(
-		"<p>Our most powerful model yet</p><code>model.launch()</code><p>Fewer hallucinations</p>",
+		'<p>Our most powerful model yet</p><code>model.launch()</code><p>Fewer hallucinations</p><textarea placeholder="Ask ChatGPT"></textarea>',
 	);
 
 	setEnabled(true);
 	await settle();
-	expect(document.body.innerHTML).toBe(
-		"<p>Our most pungent log yet</p><code>model.launch()</code><p>Fewer sharts</p>",
-	);
+	expect(document.body.innerHTML).toBe(rewritten);
 });
 
 it.each([

@@ -7,13 +7,6 @@ const canonical = (phrase: string) => phrase.replace(SEPARATOR, " ");
 
 const isExact = (key: string) => key !== key.toLowerCase();
 
-const entries = new Map(
-	Object.entries(dictionary).map(([key, replacement]) => [
-		canonical(key).toLowerCase(),
-		{ replacement, exact: isExact(key) },
-	]),
-);
-
 const escapeRegExp = (literal: string) =>
 	literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -22,14 +15,6 @@ const toPattern = (key: string) => {
 	const source = escapeRegExp(key).replace(KEY_SEPARATOR, "[\\s\\u00a0-]+");
 	return isExact(key) ? source : `(?i:${source})`;
 };
-
-const pattern = new RegExp(
-	`(?<![\\p{L}\\p{N}])(?:${Object.keys(dictionary)
-		.sort((a, b) => b.length - a.length)
-		.map(toPattern)
-		.join("|")})(?![\\p{L}\\p{N}])`,
-	"gu",
-);
 
 const startsUpper = (word: string) => /^\p{Lu}/u.test(word);
 
@@ -93,20 +78,41 @@ function matchSeparators(source: string, target: string): string {
 }
 
 /**
- * Replaces every dictionary term in `text`. Running it on its own output changes nothing.
- * `line` is the whole heading or label `text` sits in, when markup splits it into
- * pieces; its casing decides whether replacements get Title Case.
+ * Compiles `words` (see the rules in dictionary.ts) once, into a function that
+ * replaces every term in a text. Running it on its own output changes nothing.
+ * `line` is the whole heading or label the text sits in, when markup splits it
+ * into pieces; its casing decides whether replacements get Title Case.
  */
-export function replaceText(text: string, line = text): string {
-	const inTitleCaseLine = isTitleCase(line.trim().split(/\s+/));
-	return text.replace(pattern, (match) => {
-		const entry = entries.get(canonical(match).toLowerCase());
-		if (!entry) return match;
-		if (entry.exact) return entry.replacement;
-		return matchCase(
-			match,
-			matchSeparators(match, entry.replacement),
-			inTitleCaseLine,
-		);
-	});
+export function createReplacer(
+	words: Record<string, string>,
+): (text: string, line?: string) => string {
+	const entries = new Map(
+		Object.entries(words).map(([key, replacement]) => [
+			canonical(key).toLowerCase(),
+			{ replacement, exact: isExact(key) },
+		]),
+	);
+	const pattern = new RegExp(
+		`(?<![\\p{L}\\p{N}])(?:${Object.keys(words)
+			.sort((a, b) => b.length - a.length)
+			.map(toPattern)
+			.join("|")})(?![\\p{L}\\p{N}])`,
+		"gu",
+	);
+	return (text, line = text) => {
+		const inTitleCaseLine = isTitleCase(line.trim().split(/\s+/));
+		return text.replace(pattern, (match) => {
+			const entry = entries.get(canonical(match).toLowerCase());
+			if (!entry) return match;
+			if (entry.exact) return entry.replacement;
+			return matchCase(
+				match,
+				matchSeparators(match, entry.replacement),
+				inTitleCaseLine,
+			);
+		});
+	};
 }
+
+/** Replaces every term of the base dictionary in `text`. */
+export const replaceText = createReplacer(dictionary);
