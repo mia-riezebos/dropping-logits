@@ -60,32 +60,36 @@ function originalLine(parent: Element, node: Text): string {
 	return line ? originalText(line) : node.data;
 }
 
+/** Shows `replaced` in `node`, remembering what the page wrote there. */
+function swap(node: Text, replaced: string) {
+	if (replaced === node.data) return;
+	const entry = originals.get(node);
+	const original =
+		entry && node.data === entry.replaced ? entry.original : node.data;
+	originals.set(node, { original, replaced });
+	node.data = replaced;
+}
+
 /**
- * New text for `node` inside an element its site replaces whole: the first text
- * node gets the element's new text and the rest are emptied, so a greeting split
- * over several nodes shows once.
+ * Replaces an element its site rewrites whole, from all its pieces at once: the
+ * first text node gets the new text and the rest are emptied, so a greeting split
+ * over several nodes shows once and follows a change to any of them.
  */
-function wholeTextFor(
-	node: Text,
-	element: Element,
-	rewrite: NonNullable<Site["rewrite"]>,
-) {
-	const first = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-	if (node !== first.nextNode()) return "";
-	return rewrite.text(originalText(element), new Date());
+function rewriteWhole(element: Element, rule: NonNullable<Site["rewrite"]>) {
+	const text = rule.text(originalText(element), new Date());
+	let first = true;
+	forEachText(element, (piece) => {
+		swap(piece, first ? text : "");
+		first = false;
+	});
 }
 
 function rewrite(node: Text) {
 	const parent = node.parentElement;
 	if (!parent || parent.isContentEditable || parent.closest(UNTOUCHED)) return;
 	const whole = wholeText ? parent.closest(wholeText.selector) : null;
-	const replaced =
-		wholeText && whole
-			? wholeTextFor(node, whole, wholeText)
-			: replaceText(node.data, originalLine(parent, node));
-	if (replaced === node.data) return;
-	originals.set(node, { original: node.data, replaced });
-	node.data = replaced;
+	if (wholeText && whole) return rewriteWhole(whole, wholeText);
+	swap(node, replaceText(node.data, originalLine(parent, node)));
 }
 
 function rewriteAttributes(element: Element) {
