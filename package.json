@@ -1,6 +1,6 @@
 {
 	"name": "dropping-logits",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"private": true,
 	"description": "Web extension that replaces AI marketing speak with toilet humour.",
 	"license": "SEE LICENSE IN LICENSE",
