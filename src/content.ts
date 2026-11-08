@@ -1,5 +1,6 @@
 import { ENABLED, isEnabled } from "./enabled";
-import { replaceText } from "./replace";
+import { createReplacer } from "./replace";
+import { dictionaryFor, type Site, sites } from "./sites";
 
 /** Text inside these stays untouched: code samples and anything the reader is typing. */
 const UNTOUCHED = "script, style, noscript, textarea, code, pre, kbd, samp";
@@ -13,8 +14,21 @@ const UNTOUCHED = "script, style, noscript, textarea, code, pre, kbd, samp";
 const HEADINGS = "h1, h2, h3, h4, h5, h6, th, dt, legend, summary";
 const LABELS = "a, button, label";
 
-/** What each rewritten node said before, so turning off can put it back. */
-const originals = new WeakMap<Text, { original: string; replaced: string }>();
+/**
+ * Attributes people read: an input's hint and an element's tooltip. Rich-text
+ * editors' `data-placeholder` stays out: ChatGPT's editor rebuilds the node on
+ * any change to it, so rewriting it would loop.
+ */
+const ATTRIBUTES = ["placeholder", "title"];
+const WITH_ATTRIBUTES = ATTRIBUTES.map((name) => `[${name}]`).join(", ");
+
+const replaceText = createReplacer(dictionaryFor(location.hostname));
+const wholeText = sites[location.hostname]?.rewrite;
+
+/** What each rewritten text or attribute said before, so turning off can put it back. */
+type Saved = { original: string; replaced: string };
+const originals = new WeakMap<Text, Saved>();
+const attributeOriginals = new WeakMap<Element, Map<string, Saved>>();
 
 function forEachText(root: Node, visit: (node: Text) => void) {
 	if (root instanceof Text) return visit(root);
@@ -23,12 +37,16 @@ function forEachText(root: Node, visit: (node: Text) => void) {
 		visit(node as Text);
 }
 
-/** The text of the heading or label around `node` as the page wrote it, before any rewrite. */
-function originalLine(parent: Element, node: Text): string {
-	const line = parent.closest(HEADINGS) ?? parent.closest(LABELS);
-	if (!line) return node.data;
+function forEachWithAttributes(root: Node, visit: (element: Element) => void) {
+	if (!(root instanceof Element)) return;
+	if (root.matches(WITH_ATTRIBUTES)) visit(root);
+	for (const element of root.querySelectorAll(WITH_ATTRIBUTES)) visit(element);
+}
+
+/** The text of `element` as the page wrote it, before any rewrite. */
+function originalText(element: Element): string {
 	let text = "";
-	forEachText(line, (piece) => {
+	forEachText(element, (piece) => {
 		const entry = originals.get(piece);
 		text +=
 			entry && piece.data === entry.replaced ? entry.original : piece.data;
@@ -36,13 +54,51 @@ function originalLine(parent: Element, node: Text): string {
 	return text;
 }
 
+/** The text of the heading or label around `node` as the page wrote it, before any rewrite. */
+function originalLine(parent: Element, node: Text): string {
+	const line = parent.closest(HEADINGS) ?? parent.closest(LABELS);
+	return line ? originalText(line) : node.data;
+}
+
+/**
+ * New text for `node` inside an element its site replaces whole: the first text
+ * node gets the element's new text and the rest are emptied, so a greeting split
+ * over several nodes shows once.
+ */
+function wholeTextFor(
+	node: Text,
+	element: Element,
+	rewrite: NonNullable<Site["rewrite"]>,
+) {
+	const first = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+	if (node !== first.nextNode()) return "";
+	return rewrite.text(originalText(element), new Date());
+}
+
 function rewrite(node: Text) {
 	const parent = node.parentElement;
 	if (!parent || parent.isContentEditable || parent.closest(UNTOUCHED)) return;
-	const replaced = replaceText(node.data, originalLine(parent, node));
+	const whole = wholeText ? parent.closest(wholeText.selector) : null;
+	const replaced =
+		wholeText && whole
+			? wholeTextFor(node, whole, wholeText)
+			: replaceText(node.data, originalLine(parent, node));
 	if (replaced === node.data) return;
 	originals.set(node, { original: node.data, replaced });
 	node.data = replaced;
+}
+
+function rewriteAttributes(element: Element) {
+	for (const name of ATTRIBUTES) {
+		const value = element.getAttribute(name);
+		if (!value) continue;
+		const replaced = replaceText(value);
+		if (replaced === value) continue;
+		const saved = attributeOriginals.get(element) ?? new Map<string, Saved>();
+		saved.set(name, { original: value, replaced });
+		attributeOriginals.set(element, saved);
+		element.setAttribute(name, replaced);
+	}
 }
 
 /** Puts back original text, unless the page has changed the node since. */
@@ -52,13 +108,27 @@ function restore(node: Text) {
 	originals.delete(node);
 }
 
+function restoreAttributes(element: Element) {
+	for (const [name, entry] of attributeOriginals.get(element) ?? [])
+		if (element.getAttribute(name) === entry.replaced)
+			element.setAttribute(name, entry.original);
+	attributeOriginals.delete(element);
+}
+
+function rewriteAll(root: Node) {
+	forEachText(root, rewrite);
+	forEachWithAttributes(root, rewriteAttributes);
+}
+
 // Our own edits re-trigger the observer, which is harmless because
 // replaceText is idempotent.
 const observer = new MutationObserver((mutations) => {
 	for (const mutation of mutations) {
 		if (mutation.type === "characterData")
 			forEachText(mutation.target, rewrite);
-		else for (const node of mutation.addedNodes) forEachText(node, rewrite);
+		else if (mutation.type === "attributes")
+			rewriteAttributes(mutation.target as Element);
+		else for (const node of mutation.addedNodes) rewriteAll(node);
 	}
 });
 
@@ -67,13 +137,16 @@ function apply(enabled: boolean) {
 	const root = document.documentElement;
 	if (!enabled) {
 		observer.disconnect();
-		return forEachText(root, restore);
+		forEachText(root, restore);
+		return forEachWithAttributes(root, restoreAttributes);
 	}
-	forEachText(root, rewrite);
+	rewriteAll(root);
 	observer.observe(root, {
 		childList: true,
 		characterData: true,
 		subtree: true,
+		attributes: true,
+		attributeFilter: ATTRIBUTES,
 	});
 }
 

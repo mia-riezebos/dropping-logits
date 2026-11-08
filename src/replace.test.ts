@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dictionary } from "./dictionary";
-import { replaceText } from "./replace";
+import { createReplacer, replaceText } from "./replace";
+import { dictionaryFor, sites } from "./sites";
 
 describe("replaceText", () => {
 	it.each([
@@ -48,11 +49,28 @@ describe("replaceText", () => {
 		expect(replaceText(input)).toBe(expected);
 	});
 
-	it("leaves its own output alone", () => {
-		for (const key of Object.keys(dictionary)) {
-			const once = replaceText(key);
-			expect(replaceText(once), key).toBe(once);
+	it("leaves its own output alone, on every site", () => {
+		for (const site of [undefined, ...Object.keys(sites)]) {
+			const words = dictionaryFor(site);
+			const replace = createReplacer(words);
+			for (const key of Object.keys(words)) {
+				const once = replace(key);
+				expect(replace(once), `${site}: ${key}`).toBe(once);
+			}
 		}
+	});
+
+	it("swaps a bare model name only on its chatbot's own site", () => {
+		const line = "Claude Opus is Anthropic's magnum Opus, GPT-6.1 Sol too";
+		expect(replaceText(line)).toBe(
+			"Commode Magnum is Anthropoopic's magnum Opus, GPoo-6.1 Sol too",
+		);
+		expect(createReplacer(dictionaryFor("claude.ai"))("Opus 5.5")).toBe(
+			"Magnum 5.5",
+		);
+		expect(createReplacer(dictionaryFor("chatgpt.com"))("GPT-6.1 Sol")).toBe(
+			"GPoo-6.1 Soil",
+		);
 	});
 
 	it("can reach every key", () => {
